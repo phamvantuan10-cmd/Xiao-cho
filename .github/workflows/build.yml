@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,9 +43,22 @@ jobs:
         run: gradle assembleDebug
         working-directory: XiaoTroAssistant
 
-      - name: Dua file APK len de tai ve
+      - name: Doi ten file APK cho de nhan biet
+        run: cp XiaoTroAssistant/app/build/outputs/apk/debug/app-debug.apk XiaoTroAssistant.apk
+
+      - name: Dua file APK len de tai ve (Artifacts - can dang nhap)
         uses: actions/upload-artifact@v4
         with:
           name: XiaoTroAssistant-debug-apk
           path: XiaoTroAssistant/app/build/outputs/apk/debug/app-debug.apk
-        
+
+      - name: Tao Release cong khai voi APK (KHONG can dang nhap de tai)
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: "Ban APK moi nhat"
+          body: "Tu dong cap nhat moi lan build. Tai file XiaoTroAssistant.apk ben duoi ve cai."
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: XiaoTroAssistant.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
