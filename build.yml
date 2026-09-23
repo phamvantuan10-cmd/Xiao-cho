@@ -1,0 +1,62 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Giai nen project
+        run: unzip -o XiaoTroAssistant.zip -d .
+
+      - name: Tai model nhan dien khuon mat
+        run: |
+          mkdir -p XiaoTroAssistant/app/src/main/assets
+          curl -L -f -o XiaoTroAssistant/app/src/main/assets/mobilefacenet.tflite https://github.com/MCarlomagno/FaceRecognitionAuth/raw/master/assets/mobilefacenet.tflite
+          ls -la XiaoTroAssistant/app/src/main/assets/
+
+      - name: Cai dat JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cai dat Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Cai dat Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+
+      - name: Build APK
+        run: gradle assembleDebug
+        working-directory: XiaoTroAssistant
+
+      - name: Doi ten file APK
+        run: cp XiaoTroAssistant/app/build/outputs/apk/debug/app-debug.apk XiaoTroAssistant.apk
+
+      - name: Dua file APK len Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: XiaoTroAssistant-debug-apk
+          path: XiaoTroAssistant/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Tao Release cong khai voi APK
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Ban APK moi nhat
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: XiaoTroAssistant.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
